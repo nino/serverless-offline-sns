@@ -19,7 +19,9 @@ export function createMetadata() {
   };
 }
 
-export function arrayify(obj) {
+export function arrayify(
+  obj: Record<string | number | symbol, unknown>,
+): Array<Record<string | number | symbol, unknown>> {
   return Object.keys(obj).map((key) => {
     const x = {};
     x[key] = obj[key];
@@ -52,7 +54,7 @@ export function parseMessageAttributes(body) {
             body[`${baseKey}.Value.StringValue`],
         },
       }),
-      {}
+      {},
     );
 }
 
@@ -79,7 +81,7 @@ export function createSnsLambdaEvent(
   message,
   messageId,
   messageAttributes?,
-  messageGroupId?
+  messageGroupId?,
 ) {
   return {
     Records: [
@@ -114,7 +116,7 @@ export function createSnsTopicEvent(
   messageId,
   messageStructure,
   messageAttributes?,
-  messageGroupId?
+  messageGroupId?,
 ) {
   return {
     SignatureVersion: "1",
@@ -139,7 +141,7 @@ export function createMessageId() {
 
 const phoneNumberValidator = /^\++?[1-9]\d{1,14}$/;
 
-export function validatePhoneNumber(phoneNumber) {
+export function validatePhoneNumber(phoneNumber: string): string {
   if (!phoneNumberValidator.test(phoneNumber)) {
     throw new Error(`PhoneNumber ${phoneNumber} is not valid to publish`);
   }
@@ -148,16 +150,19 @@ export function validatePhoneNumber(phoneNumber) {
 
 // the topics name is that last part of the ARN:
 // arn:aws:sns:<REGION>:<ACCOUNT_ID>:<TOPIC_NAME>
-export const topicNameFromArn = (arn) => {
+export const topicNameFromArn = (arn: string): string => {
   const arnParts = arn.split(":");
   return arnParts[arnParts.length - 1];
 };
 
-export const topicArnFromName = (name, region, accountId) =>
-  `arn:aws:sns:${region}:${accountId}:${name}`;
+export const topicArnFromName = (
+  name: string,
+  region: string,
+  accountId: string,
+): string => `arn:aws:sns:${region}:${accountId}:${name}`;
 
 export const formatMessageAttributes = (
-  messageAttributes: MessageAttributes
+  messageAttributes: MessageAttributes,
 ) => {
   const newMessageAttributes = {};
   for (const [key, value] of Object.entries(messageAttributes)) {

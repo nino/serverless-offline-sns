@@ -1,0 +1,25 @@
+---
+root: true
+parser: "@typescript-eslint/parser"
+plugins:
+    - "@typescript-eslint"
+env:
+    es6: true
+    node: true
+extends:
+    - "eslint:recommended"
+    - "plugin:@typescript-eslint/eslint-recommended"
+    - "plugin:@typescript-eslint/recommended"
+    - "plugin:prettier/recommended" # Make this the last element so prettier config overrides other formatting rules
+rules:
+    prettier/prettier:
+        - error
+    "@typescript-eslint/no-unused-vars":
+        - error
+        - "argsIgnorePattern": "^_"
+    camelcase:
+        - error
+        - ignoreImports: true
+    eqeqeq:
+        - error
+        - smart

@@ -1,14 +1,27 @@
-import { ListSubscriptionsResponse, ListTopicsResponse, MessageAttributeValue, SNSClient, ListTopicsCommand, ListSubscriptionsCommand, UnsubscribeCommand, CreateTopicCommand, SubscribeCommand, PublishCommand } from "@aws-sdk/client-sns";
+import {
+  ListSubscriptionsResponse,
+  ListTopicsResponse,
+  MessageAttributeValue,
+  SNSClient,
+  ListTopicsCommand,
+  ListSubscriptionsCommand,
+  UnsubscribeCommand,
+  CreateTopicCommand,
+  SubscribeCommand,
+  PublishCommand,
+} from "@aws-sdk/client-sns";
 import _ from "lodash";
 import fetch from "node-fetch";
 import { createMessageId, createSnsLambdaEvent } from "./helpers.js";
 import { IDebug, ISNSAdapter } from "./types.js";
+import { Event, FunctionDefinition } from "serverless";
+import { Context, Handler } from "aws-lambda";
 
 export class SNSAdapter implements ISNSAdapter {
   private sns: SNSClient;
   private pluginDebug: IDebug;
-  private port: number;
-  private server: any;
+  private port: never;
+  private server: never;
   private app: any;
   private serviceName: string;
   private stage: string;
@@ -18,17 +31,17 @@ export class SNSAdapter implements ISNSAdapter {
   private accountId: string;
 
   constructor(
-    localPort,
-    remotePort,
-    region,
-    snsEndpoint,
+    localPort: number,
+    remotePort: number,
+    region: string,
+    snsEndpoint: string,
     debug,
     app,
-    serviceName,
-    stage,
-    accountId,
-    host,
-    subscribeEndpoint
+    serviceName: string,
+    stage: string,
+    accountId: string,
+    host: string,
+    subscribeEndpoint: string,
   ) {
     this.pluginDebug = debug;
     this.app = app;
@@ -85,25 +98,22 @@ export class SNSAdapter implements ISNSAdapter {
     });
   }
 
-  public async unsubscribe(arn) {
+  public async unsubscribe(arn: string) {
     this.debug("unsubscribing: " + arn);
     const unsubscribeReq = new UnsubscribeCommand({ SubscriptionArn: arn });
     await new Promise((res) => {
-      this.sns.send(
-        unsubscribeReq,
-        (err, data) => {
-          if (err) {
-            this.debug(err, err.stack);
-          } else {
-            this.debug("unsubscribed: " + JSON.stringify(data));
-          }
-          res(true);
+      this.sns.send(unsubscribeReq, (err, data) => {
+        if (err) {
+          this.debug(err, err.stack);
+        } else {
+          this.debug("unsubscribed: " + JSON.stringify(data));
         }
-      );
+        res(true);
+      });
     });
   }
 
-  public async createTopic(topicName) {
+  public async createTopic(topicName: string) {
     const createTopicReq = new CreateTopicCommand({ Name: topicName });
     return new Promise((res) =>
       this.sns.send(createTopicReq, (err, data) => {
@@ -113,14 +123,19 @@ export class SNSAdapter implements ISNSAdapter {
           this.debug("arn: " + JSON.stringify(data));
         }
         res(data);
-      })
+      }),
     );
   }
 
   private sent: (data) => void;
   public Deferred = new Promise((res) => (this.sent = res));
 
-  public async subscribe(fn, getHandler, arn, snsConfig) {
+  public async subscribe(
+    fn: FunctionDefinition,
+    getHandler: Handler<Event>,
+    arn: string,
+    snsConfig,
+  ) {
     arn = this.convertPseudoParams(arn);
     const subscribeEndpoint = this.baseSubscribeEndpoint + "/" + fn.name;
     this.debug("subscribe: " + fn.name + " " + arn);
@@ -143,14 +158,14 @@ export class SNSAdapter implements ISNSAdapter {
           msg,
           event.MessageId || createMessageId(),
           event.MessageAttributes || {},
-          event.MessageGroupId
+          event.MessageGroupId,
         );
       }
 
       if (req.body.SubscribeURL) {
         this.debug("Visiting subscribe url: " + req.body.SubscribeURL);
         return fetch(req.body.SubscribeURL, {
-          method: "GET"
+          method: "GET",
         }).then((fetchResponse) => this.debug("Subscribed: " + fetchResponse));
       }
 
@@ -167,7 +182,7 @@ export class SNSAdapter implements ISNSAdapter {
       const maybePromise = getHandler(
         event,
         this.createLambdaContext(fn, sendIt),
-        sendIt
+        sendIt,
       );
       if (maybePromise && maybePromise.then) {
         maybePromise
@@ -187,7 +202,7 @@ export class SNSAdapter implements ISNSAdapter {
     }
     if (snsConfig.filterPolicy) {
       params.Attributes["FilterPolicy"] = JSON.stringify(
-        snsConfig.filterPolicy
+        snsConfig.filterPolicy,
       );
     }
 
@@ -198,7 +213,7 @@ export class SNSAdapter implements ISNSAdapter {
           this.debug(err, err.stack);
         } else {
           this.debug(
-            `successfully subscribed fn "${fn.name}" to topic: "${arn}"`
+            `successfully subscribed fn "${fn.name}" to topic: "${arn}"`,
           );
         }
         res(true);
@@ -206,7 +221,7 @@ export class SNSAdapter implements ISNSAdapter {
     });
   }
 
-  public async subscribeQueue(queueUrl, arn, snsConfig) {
+  public async subscribeQueue(queueUrl: string, arn: string, snsConfig) {
     arn = this.convertPseudoParams(arn);
     this.debug("subscribe: " + queueUrl + " " + arn);
     const params = {
@@ -221,7 +236,7 @@ export class SNSAdapter implements ISNSAdapter {
     }
     if (snsConfig.filterPolicy) {
       params.Attributes["FilterPolicy"] = JSON.stringify(
-        snsConfig.filterPolicy
+        snsConfig.filterPolicy,
       );
     }
 
@@ -232,7 +247,7 @@ export class SNSAdapter implements ISNSAdapter {
           this.debug(err, err.stack);
         } else {
           this.debug(
-            `successfully subscribed queue "${queueUrl}" to topic: "${arn}"`
+            `successfully subscribed queue "${queueUrl}" to topic: "${arn}"`,
           );
         }
         res(true);
@@ -240,7 +255,7 @@ export class SNSAdapter implements ISNSAdapter {
     });
   }
 
-  public convertPseudoParams(topicArn) {
+  public convertPseudoParams(topicArn: string) {
     const awsRegex = /#{AWS::([a-zA-Z]+)}/g;
     return topicArn.replace(awsRegex, this.accountId);
   }
@@ -251,7 +266,7 @@ export class SNSAdapter implements ISNSAdapter {
     type: string = "",
     messageAttributes: Record<string, MessageAttributeValue> = {},
     subject: string = "",
-    messageGroupId?: string
+    messageGroupId?: string,
   ) {
     topicArn = this.convertPseudoParams(topicArn);
     const publishReq = new PublishCommand({
@@ -262,13 +277,10 @@ export class SNSAdapter implements ISNSAdapter {
       MessageAttributes: messageAttributes,
       ...(messageGroupId && { MessageGroupId: messageGroupId }),
     });
-    return await new Promise((resolve, reject) =>
-      this.sns.send(
-        publishReq,
-        (err, result) => {
-          resolve(result);
-        }
-      )
+    return await new Promise((resolve) =>
+      this.sns.send(publishReq, (_err, result) => {
+        resolve(result);
+      }),
     );
   }
 
@@ -277,7 +289,7 @@ export class SNSAdapter implements ISNSAdapter {
     message: string,
     type: string = "",
     messageAttributes: Record<string, MessageAttributeValue> = {},
-    messageGroupId?: string
+    messageGroupId?: string,
   ) {
     targetArn = this.convertPseudoParams(targetArn);
     const publishReq = new PublishCommand({
@@ -287,13 +299,10 @@ export class SNSAdapter implements ISNSAdapter {
       MessageAttributes: messageAttributes,
       ...(messageGroupId && { MessageGroupId: messageGroupId }),
     });
-    return await new Promise((resolve, reject) =>
-      this.sns.send(
-        publishReq,
-        (err, result) => {
-          resolve(result);
-        }
-      )
+    return await new Promise((resolve) =>
+      this.sns.send(publishReq, (_err, result) => {
+        resolve(result);
+      }),
     );
   }
 
@@ -302,7 +311,7 @@ export class SNSAdapter implements ISNSAdapter {
     message: string,
     type: string = "",
     messageAttributes: Record<string, MessageAttributeValue> = {},
-    messageGroupId?: string
+    messageGroupId?: string,
   ) {
     const publishReq = new PublishCommand({
       Message: message,
@@ -311,21 +320,18 @@ export class SNSAdapter implements ISNSAdapter {
       MessageAttributes: messageAttributes,
       ...(messageGroupId && { MessageGroupId: messageGroupId }),
     });
-    return await new Promise((resolve, reject) =>
-      this.sns.send(
-        publishReq,
-        (err, result) => {
-          resolve(result);
-        }
-      )
+    return await new Promise((resolve) =>
+      this.sns.send(publishReq, (_err, result) => {
+        resolve(result);
+      }),
     );
   }
 
-  public debug(msg, stack?: any) {
+  public debug(msg: string, _stack?: any) {
     this.pluginDebug(msg, "adapter");
   }
 
-  private createLambdaContext(fun, cb?) {
+  private createLambdaContext(fun: FunctionDefinition, cb?): Context {
     const functionName = `${this.serviceName}-${this.stage}-${fun.name}`;
     const endTime =
       new Date().getTime() + (fun.timeout ? fun.timeout * 1000 : 6000);
@@ -340,7 +346,7 @@ export class SNSAdapter implements ISNSAdapter {
 
       /* Properties */
       functionName,
-      memoryLimitInMB: fun.memorySize || 1536,
+      memoryLimitInMB: String(fun.memorySize || 1536),
       functionVersion: `offline_functionVersion_for_${functionName}`,
       invokedFunctionArn: `offline_invokedFunctionArn_for_${functionName}`,
       awsRequestId: `offline_awsRequestId_${Math.random()
@@ -348,8 +354,10 @@ export class SNSAdapter implements ISNSAdapter {
         .slice(2)}`,
       logGroupName: `offline_logGroupName_for_${functionName}`,
       logStreamName: `offline_logStreamName_for_${functionName}`,
-      identity: {},
-      clientContext: {},
+      identity: undefined,
+      clientContext: undefined,
+      // not sure if this should be true or false
+      callbackWaitsForEmptyEventLoop: true,
     };
   }
 }

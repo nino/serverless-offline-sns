@@ -47,7 +47,7 @@ export class SNSServer implements ISNSServer {
       res.header("Access-Control-Allow-Origin", "*");
       res.header(
         "Access-Control-Allow-Headers",
-        "Origin, X-Requested-With, Content-Type, Accept"
+        "Origin, X-Requested-With, Content-Type, Accept",
       );
       next();
     });
@@ -57,7 +57,7 @@ export class SNSServer implements ISNSServer {
       this.debug(JSON.stringify(this.subscriptions));
       if (req.body.Action === "ListSubscriptions") {
         this.debug(
-          "sending: " + xml(this.listSubscriptions(), { indent: "\t" })
+          "sending: " + xml(this.listSubscriptions(), { indent: "\t" }),
         );
         res.send(xml(this.listSubscriptions()));
       } else if (req.body.Action === "ListTopics") {
@@ -72,9 +72,9 @@ export class SNSServer implements ISNSServer {
               req.body.Endpoint,
               req.body.Protocol,
               req.body.TopicArn,
-              req.body
-            )
-          )
+              req.body,
+            ),
+          ),
         );
       } else if (req.body.Action === "Publish") {
         const target = this.extractTarget(req.body);
@@ -93,9 +93,9 @@ export class SNSServer implements ISNSServer {
               req.body.Message,
               req.body.MessageStructure,
               parseMessageAttributes(req.body),
-              req.body.MessageGroupId
-            )
-          )
+              req.body.MessageGroupId,
+            ),
+          ),
         );
       } else if (req.body.Action === "Unsubscribe") {
         res.send(xml(this.unsubscribe(req.body.SubscriptionArn)));
@@ -103,7 +103,7 @@ export class SNSServer implements ISNSServer {
         res.send(
           xml({
             NotImplementedResponse: [createAttr(), createMetadata()],
-          })
+          }),
         );
       }
       this.debug(JSON.stringify(this.subscriptions));
@@ -139,7 +139,7 @@ export class SNSServer implements ISNSServer {
         return {
           member: [sub],
         };
-      })
+      }),
     );
     return {
       ListSubscriptionsResponse: [
@@ -170,7 +170,7 @@ export class SNSServer implements ISNSServer {
     this.debug(JSON.stringify(this.subscriptions));
     this.debug("unsubscribing: " + arn);
     this.subscriptions = this.subscriptions.filter(
-      (sub) => sub.SubscriptionArn !== arn
+      (sub) => sub.SubscriptionArn !== arn,
     );
     return {
       UnsubscribeResponse: [createAttr(), createMetadata()],
@@ -257,9 +257,9 @@ export class SNSServer implements ISNSServer {
       if (_.intersection(v as unknown[], attrs).length > 0) {
         this.debug(
           "filterPolicy Passed: " +
-          v +
-          " matched message attrs: " +
-          JSON.stringify(attrs)
+            v +
+            " matched message attrs: " +
+            JSON.stringify(attrs),
         );
         shouldSend = true;
       } else {
@@ -270,9 +270,9 @@ export class SNSServer implements ISNSServer {
     if (!shouldSend) {
       this.debug(
         "filterPolicy Failed: " +
-        JSON.stringify(policies) +
-        " did not match message attrs: " +
-        JSON.stringify(messageAttrs)
+          JSON.stringify(policies) +
+          " did not match message attrs: " +
+          JSON.stringify(messageAttrs),
       );
     }
 
@@ -306,10 +306,9 @@ export class SNSServer implements ISNSServer {
         ...(messageGroupId && { MessageGroupId: messageGroupId }),
       });
       return new Promise<void>((resolve, reject) => {
-        sqs
-          .send(sendMsgReq).then(() => {
-            resolve();
-          });
+        sqs.send(sendMsgReq).then(() => {
+          resolve();
+        });
       });
     } else {
       const records = JSON.parse(event).Records ?? [];
@@ -321,10 +320,9 @@ export class SNSServer implements ISNSServer {
           ...(messageGroupId && { MessageGroupId: messageGroupId }),
         });
         return new Promise<void>((resolve, reject) => {
-          sqs
-            .send(sendMsgReq).then(() => {
-              resolve();
-            });
+          sqs.send(sendMsgReq).then(() => {
+            resolve();
+          });
         });
       });
       return new Promise<void>((resolve, reject) => {
@@ -339,7 +337,7 @@ export class SNSServer implements ISNSServer {
     message,
     messageStructure,
     messageAttributes,
-    messageGroupId
+    messageGroupId,
   ) {
     const messageId = createMessageId();
     Promise.all(
@@ -352,7 +350,7 @@ export class SNSServer implements ISNSServer {
             !this.evaluatePolicies(sub["Policies"], messageAttributes)
           ) {
             this.debug(
-              "Filter policies failed. Skipping subscription: " + sub.Endpoint
+              "Filter policies failed. Skipping subscription: " + sub.Endpoint,
             );
             return;
           }
@@ -370,8 +368,8 @@ export class SNSServer implements ISNSServer {
                 messageId,
                 messageStructure,
                 messageAttributes,
-                messageGroupId
-              )
+                messageGroupId,
+              ),
             );
           }
           this.debug("event: " + event);
@@ -387,13 +385,13 @@ export class SNSServer implements ISNSServer {
               event,
               sub,
               messageAttributes,
-              messageGroupId
+              messageGroupId,
             );
           }
           throw new Error(
-            `Protocol '${protocol}' is not supported by serverless-offline-sns`
+            `Protocol '${protocol}' is not supported by serverless-offline-sns`,
           );
-        })
+        }),
     );
     return {
       PublishResponse: [
@@ -431,7 +429,7 @@ export class SNSServer implements ISNSServer {
     if (msg instanceof Object) {
       try {
         msg = JSON.stringify(msg);
-      } catch (ex) { }
+      } catch (ex) {}
     }
     this.pluginDebug(msg, "server");
   }

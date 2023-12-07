@@ -1,13 +1,13 @@
+import { Handler } from "aws-lambda";
 import {
   ListSubscriptionsResponse,
   CreateTopicResponse,
   PublishResponse,
   ListTopicsResponse,
 } from "aws-sdk/clients/sns.d.js";
+import { Event, FunctionDefinition } from "serverless";
 
-export type IDebug = (msg: any, stack?: any) => void;
-
-export type SLSHandler = (event, ctx, cb) => void;
+export type IDebug = (msg: string, stack?: any) => void;
 
 export interface ISNSAdapter {
   listTopics(): Promise<ListTopicsResponse>;
@@ -15,23 +15,20 @@ export interface ISNSAdapter {
   unsubscribe(arn: string): Promise<void>;
   createTopic(topicName: string): Promise<CreateTopicResponse>;
   subscribe(
-    fnName: string,
-    handler: SLSHandler,
+    fn: FunctionDefinition,
+    handler: Handler<Event>,
     arn: string,
-    snsConfig: any
+    snsConfig: any,
   ): Promise<void>;
   subscribeQueue(queueUrl: string, arn: string, snsConfig: any): Promise<void>;
-  publish(
-    topicArn: string,
-    message: string
-  ): Promise<PublishResponse>;
+  publish(topicArn: string, message: string): Promise<PublishResponse>;
 }
 
 export type ISNSAdapterConstructable = new (
   endpoint: string,
   port: number,
   region: string,
-  debug: IDebug
+  debug: IDebug,
 ) => ISNSAdapter;
 
 export interface ISNSServer {
@@ -44,4 +41,3 @@ export interface IMessageAttribute {
   Type: string;
   Value: string;
 }
-
