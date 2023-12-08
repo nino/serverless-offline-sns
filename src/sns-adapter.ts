@@ -13,11 +13,19 @@ import {
 import _ from "lodash";
 import fetch from "node-fetch";
 import { createMessageId, createSnsLambdaEvent } from "./helpers.js";
-import { IDebug, ISNSAdapter } from "./types.js";
+import { IDebug } from "./types.js";
 import { Event, FunctionDefinition } from "serverless";
 import { Context, Handler } from "aws-lambda";
 
-export class SNSAdapter implements ISNSAdapter {
+/**
+ * This is the data returned by SNSAdapter.createTopic.
+ * Not sure if it needs to have other attributes too.
+ */
+type Topic = {
+  TopicArn: string;
+};
+
+export class SNSAdapter {
   private sns: SNSClient;
   private pluginDebug: IDebug;
   private port: never;
@@ -113,7 +121,7 @@ export class SNSAdapter implements ISNSAdapter {
     });
   }
 
-  public async createTopic(topicName: string) {
+  public async createTopic(topicName: string): Promise<Topic> {
     const createTopicReq = new CreateTopicCommand({ Name: topicName });
     return new Promise((res) =>
       this.sns.send(createTopicReq, (err, data) => {
@@ -122,7 +130,7 @@ export class SNSAdapter implements ISNSAdapter {
         } else {
           this.debug("arn: " + JSON.stringify(data));
         }
-        res(data);
+        res(data as Topic);
       }),
     );
   }

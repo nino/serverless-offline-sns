@@ -4,7 +4,6 @@ import { SNSAdapter } from "./sns-adapter.js";
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
-import { ISNSAdapter } from "./types.js";
 import { SNSServer } from "./sns-server.js";
 import _ from "lodash";
 import { resolve } from "path";
@@ -40,7 +39,7 @@ class ServerlessOfflineSns {
   private localPort: number;
   private remotePort: number;
   public hooks: object;
-  private snsAdapter: ISNSAdapter;
+  private snsAdapter: SNSAdapter;
   private app: any;
   private snsServer: any;
   private server: any;
@@ -328,7 +327,8 @@ class ServerlessOfflineSns {
       subscription.options.topicName,
     );
     this.debug("topic: " + JSON.stringify(data));
-    const fn: FunctionDefinition = this.serverless.service.functions[subscription.fnName];
+    const fn: FunctionDefinition =
+      this.serverless.service.functions[subscription.fnName];
     const handler = await this.createHandler(subscription.fnName, fn, location);
     await this.snsAdapter.subscribe(
       fn,
