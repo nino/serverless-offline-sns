@@ -1,7 +1,7 @@
 import * as shell from "shelljs";
 
 import { SNSAdapter } from "./sns-adapter.js";
-import express from "express";
+import express, { Application } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import { SNSServer } from "./sns-server.js";
@@ -15,7 +15,7 @@ const { get, has } = lodashfp;
 import { loadServerlessConfig } from "./sls-config-parser.js";
 import url from "url";
 import assert from "node:assert";
-import { Event, FunctionDefinition } from "serverless";
+import { FunctionDefinition } from "serverless";
 
 type Config = {
   port: number;
@@ -40,8 +40,8 @@ class ServerlessOfflineSns {
   private remotePort: number;
   public hooks: object;
   private snsAdapter: SNSAdapter;
-  private app: any;
-  private snsServer: any;
+  private app: Application;
+  private snsServer: SNSServer;
   private server: any;
   private options: any;
   private location: string;
@@ -53,7 +53,7 @@ class ServerlessOfflineSns {
   constructor(serverless: any, options: any = {}) {
     this.app = express();
     this.app.use(cors());
-    this.app.use((req, res, next) => {
+    this.app.use((req, _res, next) => {
       // fix for https://github.com/s12v/sns/issues/45 not sending content-type
       req.headers["content-type"] = req.headers["content-type"] || "text/plain";
       next();

@@ -18,6 +18,7 @@ import {
   formatMessageAttributes,
 } from "./helpers.js";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
+import { Application } from "express";
 
 export class SNSServer {
   private topics: TopicsList;
@@ -25,11 +26,16 @@ export class SNSServer {
   private pluginDebug: IDebug;
   private port: number;
   private server: any;
-  private app: any;
+  private app: Application;
   private region: string;
   private accountId: string;
 
-  constructor(debug, app, region, accountId) {
+  constructor(
+    debug: IDebug,
+    app: Application,
+    region: string,
+    accountId: string,
+  ) {
     this.pluginDebug = debug;
     this.topics = [];
     this.subscriptions = [];
@@ -43,7 +49,7 @@ export class SNSServer {
     this.debug("configuring route");
     this.app.use(bodyParser.json({ limit: "10mb" })); // for parsing application/json
     this.app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" })); // for parsing application/x-www-form-urlencoded
-    this.app.use((req, res, next) => {
+    this.app.use((_req, res, next) => {
       res.header("Access-Control-Allow-Origin", "*");
       res.header(
         "Access-Control-Allow-Headers",
