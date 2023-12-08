@@ -16,6 +16,7 @@ import { loadServerlessConfig } from "./sls-config-parser.js";
 import url from "url";
 import assert from "node:assert";
 import { FunctionDefinition } from "serverless";
+import { Resources, Sns } from "serverless/plugins/aws/provider/awsProvider.js";
 
 type Config = {
   port: number;
@@ -30,6 +31,11 @@ type Config = {
   subscriptions?: any[];
   autoSubscribe?: boolean;
   servicesDirectory?: string;
+};
+
+type Subscription = {
+  fnName: string;
+  options: { topicName: string };
 };
 
 class ServerlessOfflineSns {
@@ -177,11 +183,11 @@ class ServerlessOfflineSns {
     return result;
   }
 
-  private getResourceSubscriptions(serverless) {
-    const resources = serverless.service.resources?.Resources;
+  private getResourceSubscriptions(serverless: import("serverless")) {
+    const resources: Resources = serverless.service.resources?.Resources;
     const subscriptions = [];
     if (!resources) return subscriptions;
-    new Map(Object.entries(resources)).forEach((value, key) => {
+    new Map(Object.entries(resources)).forEach((value) => {
       let type = get(["Type"], value);
       if (type !== "AWS::SNS::Subscription") return;
 
@@ -318,7 +324,10 @@ class ServerlessOfflineSns {
     );
   }
 
-  private async subscribeFromResource(subscription, location) {
+  private async subscribeFromResource(
+    subscription: Subscription,
+    location: string,
+  ) {
     this.debug("subscribe: " + subscription.fnName);
     this.log(
       `Creating topic: "${subscription.options.topicName}" for fn "${subscription.fnName}"`,
@@ -349,9 +358,14 @@ class ServerlessOfflineSns {
     );
   }
 
-  public async subscribe(serverless, fnName, snsConfig, lambdasLocation) {
+  public async subscribe(
+    serverless: import("serverless"),
+    fnName: string,
+    snsConfig: string | Sns,
+    lambdasLocation: string,
+  ) {
     this.debug("subscribe: " + fnName);
-    const fn: FunctionDefinition = serverless.service.functions[fnName];
+    const fn = serverless.service.functions[fnName];
 
     if (!fn.runtime) {
       fn.runtime = serverless.service.provider.runtime;
@@ -388,7 +402,10 @@ class ServerlessOfflineSns {
     await this.snsAdapter.subscribe(fn, handler, data.TopicArn, snsConfig);
   }
 
-  public async subscribeQueue(queueUrl, snsConfig) {
+  public async subscribeQueue(
+    queueUrl: string,
+    snsConfig: string | Sns,
+  ): Promise<string> {
     this.debug("subscribe: " + queueUrl);
     let topicName = "";
 
@@ -420,7 +437,11 @@ class ServerlessOfflineSns {
     await this.snsAdapter.subscribeQueue(queueUrl, data.TopicArn, snsConfig);
   }
 
-  public async createHandler(fnName, fn, location) {
+  public async createHandler(
+    fnName: string,
+    fn: FunctionDefinition,
+    location: string,
+  ) {
     if (!fn.runtime || fn.runtime.startsWith("nodejs")) {
       return await this.createJavascriptHandler(fn, location);
     } else {
@@ -428,7 +449,11 @@ class ServerlessOfflineSns {
     }
   }
 
-  public async createProxyHandler(funName, funOptions, location) {
+  public async createProxyHandler(
+    funName: string,
+    funOptions: FunctionDefinition,
+    location: string,
+  ) {
     const options = this.options;
     return (event, context) => {
       const args = ["invoke", "local", "-f", funName];
@@ -471,7 +496,7 @@ class ServerlessOfflineSns {
         context.fail(data);
       });
 
-      process.on("close", (code) => {
+      process.on("close", () => {
         if (!error) {
           // try to parse to json
           // valid result should be a json array | object
