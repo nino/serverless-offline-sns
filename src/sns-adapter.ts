@@ -16,6 +16,7 @@ import { createMessageId, createSnsLambdaEvent } from "./helpers.js";
 import { IDebug } from "./types.js";
 import { Event, FunctionDefinition } from "serverless";
 import { Context, Handler } from "aws-lambda";
+import { Application } from "express";
 
 /**
  * This is the data returned by SNSAdapter.createTopic.
@@ -43,8 +44,8 @@ export class SNSAdapter {
     remotePort: number,
     region: string,
     snsEndpoint: string,
-    debug,
-    app,
+    debug: IDebug,
+    app: Application,
     serviceName: string,
     stage: string,
     accountId: string,

@@ -15,7 +15,7 @@ const { get, has } = lodashfp;
 import { loadServerlessConfig } from "./sls-config-parser.js";
 import url from "url";
 import assert from "node:assert";
-import { FunctionDefinition } from "serverless";
+import { FunctionDefinition, FunctionDefinitionHandler } from "serverless";
 import { Resources, Sns } from "serverless/plugins/aws/provider/awsProvider.js";
 
 type Config = {
@@ -443,7 +443,10 @@ class ServerlessOfflineSns {
     location: string,
   ) {
     if (!fn.runtime || fn.runtime.startsWith("nodejs")) {
-      return await this.createJavascriptHandler(fn, location);
+      return await this.createJavascriptHandler(
+        fn as FunctionDefinitionHandler,
+        location,
+      );
     } else {
       return async () => await this.createProxyHandler(fnName, fn, location);
     }
@@ -552,7 +555,10 @@ class ServerlessOfflineSns {
     };
   }
 
-  public async createJavascriptHandler(fn, location) {
+  public async createJavascriptHandler(
+    fn: FunctionDefinitionHandler,
+    location: string,
+  ) {
     // Options are passed from the command line in the options parameter
     this.debug(process.cwd());
     const handlerFnNameIndex = fn.handler.lastIndexOf(".");
@@ -563,11 +569,11 @@ class ServerlessOfflineSns {
     return handlers[handlerFnName] || handlers.default[handlerFnName];
   }
 
-  public log(msg, prefix = "INFO[serverless-offline-sns]: ") {
+  public log(msg: string, prefix = "INFO[serverless-offline-sns]: ") {
     this.serverless.cli.log.call(this.serverless.cli, prefix + msg);
   }
 
-  public debug(msg, context?: string) {
+  public debug(msg: string, context?: string) {
     if (this.config.debug) {
       if (context) {
         this.log(msg, `DEBUG[serverless-offline-sns][${context}]: `);
