@@ -1,7 +1,7 @@
 import { TopicsList, Subscription } from "aws-sdk/clients/sns.js";
 import fetch from "node-fetch";
 import { URL } from "url";
-import { IDebug, ISNSServer } from "./types.js";
+import { IDebug } from "./types.js";
 import bodyParser from "body-parser";
 import _ from "lodash";
 import xml from "xml";
@@ -19,7 +19,7 @@ import {
 } from "./helpers.js";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 
-export class SNSServer implements ISNSServer {
+export class SNSServer {
   private topics: TopicsList;
   private subscriptions: Subscription[];
   private pluginDebug: IDebug;

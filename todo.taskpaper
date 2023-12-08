@@ -1,2 +1,2 @@
-- get rid of ISNSAdapter
+- get rid of ISNSAdapter @done(2023-12-08T18:35:24Z)
 - document `localPort` and `remotePort` config options
