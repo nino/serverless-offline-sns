@@ -160,20 +160,20 @@ class ServerlessOfflineSns {
   }
   private getFunctionName(name: string) {
     let result: string;
-    Object.entries(this.serverless.service.functions).forEach(
-      ([funcName, funcValue]) => {
-        const events = get(["events"], funcValue);
-        events &&
-          events.forEach((event) => {
-            const attribute = get(["sqs", "arn"], event);
-            if (!has("Fn::GetAtt", attribute)) return;
-            const [resourceName, value] = attribute["Fn::GetAtt"];
-            if (value !== "Arn") return;
-            if (name !== resourceName) return;
-            result = funcName;
-          });
-      },
-    );
+    Object.entries(
+      this.serverless.service.functions as FunctionDefinition[],
+    ).forEach(([funcName, funcValue]) => {
+      const events = get(["events"], funcValue);
+      events &&
+        events.forEach((event) => {
+          const attribute = get(["sqs", "arn"], event);
+          if (!has("Fn::GetAtt", attribute)) return;
+          const [resourceName, value] = attribute["Fn::GetAtt"];
+          if (value !== "Arn") return;
+          if (name !== resourceName) return;
+          result = funcName;
+        });
+    });
     return result;
   }
 
