@@ -14,8 +14,8 @@ import {
   parseAttributes,
   createMessageId,
   validatePhoneNumber,
-  topicArnFromName,
   formatMessageAttributes,
+  topicArnFromName,
 } from "./helpers.js";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import { Application } from "express";
@@ -172,7 +172,7 @@ export class SNSServer {
     };
   }
 
-  public unsubscribe(arn) {
+  public unsubscribe(arn: string) {
     this.debug(JSON.stringify(this.subscriptions));
     this.debug("unsubscribing: " + arn);
     this.subscriptions = this.subscriptions.filter(
@@ -183,7 +183,7 @@ export class SNSServer {
     };
   }
 
-  public createTopic(topicName) {
+  public createTopic(topicName: string) {
     const topicArn = topicArnFromName(topicName, this.region, this.accountId);
     const topic = {
       TopicArn: topicArn,
@@ -206,7 +206,7 @@ export class SNSServer {
     };
   }
 
-  public subscribe(endpoint, protocol, arn, body) {
+  public subscribe(endpoint: string, protocol: any, arn: string, body: any) {
     const attributes = parseAttributes(body);
     const filterPolicies =
       attributes["FilterPolicy"] && JSON.parse(attributes["FilterPolicy"]);
@@ -216,7 +216,7 @@ export class SNSServer {
         subscription.Endpoint === endpoint && subscription.TopicArn === arn
       );
     });
-    let subscriptionArn;
+    let subscriptionArn: string;
     if (!existingSubscription) {
       const sub = {
         SubscriptionArn: arn + ":" + Math.floor(Math.random() * (1000000 - 1)),
@@ -311,7 +311,7 @@ export class SNSServer {
         MessageAttributes: formatMessageAttributes(messageAttributes),
         ...(messageGroupId && { MessageGroupId: messageGroupId }),
       });
-      return new Promise<void>((resolve, reject) => {
+      return new Promise<void>((resolve) => {
         sqs.send(sendMsgReq).then(() => {
           resolve();
         });
@@ -325,25 +325,25 @@ export class SNSServer {
           MessageAttributes: formatMessageAttributes(messageAttributes),
           ...(messageGroupId && { MessageGroupId: messageGroupId }),
         });
-        return new Promise<void>((resolve, reject) => {
+        return new Promise<void>((resolve) => {
           sqs.send(sendMsgReq).then(() => {
             resolve();
           });
         });
       });
-      return new Promise<void>((resolve, reject) => {
+      return new Promise<void>((resolve) => {
         Promise.all(messagePromises).then(() => resolve());
       });
     }
   }
 
   public publish(
-    topicArn,
-    subject,
-    message,
-    messageStructure,
-    messageAttributes,
-    messageGroupId,
+    topicArn: string,
+    subject: string,
+    message: any,
+    messageStructure: any,
+    messageAttributes: any,
+    messageGroupId: any,
   ) {
     const messageId = createMessageId();
     Promise.all(
@@ -414,7 +414,11 @@ export class SNSServer {
     };
   }
 
-  public extractTarget(body) {
+  public extractTarget(body: {
+    PhoneNumber: string;
+    TopicArn: any;
+    TargetArn: any;
+  }) {
     if (!body.PhoneNumber) {
       const target = body.TopicArn || body.TargetArn;
       if (!target) {
@@ -426,7 +430,7 @@ export class SNSServer {
     }
   }
 
-  public convertPseudoParams(topicArn) {
+  public convertPseudoParams(topicArn: string) {
     const awsRegex = /#{AWS::([a-zA-Z]+)}/g;
     return topicArn.replace(awsRegex, this.accountId);
   }
