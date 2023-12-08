@@ -540,11 +540,7 @@ const createServerless = (
   };
 };
 
-const createServerlessMultiDot = (
-  accountId: number,
-  handlerName: string = "pongHandler",
-  host = null,
-) => {
+const createServerlessMultiDot = (accountId: number, host = null) => {
   return {
     config: {},
     service: {

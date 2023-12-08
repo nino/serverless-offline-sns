@@ -3,7 +3,7 @@ import path from "path";
 import Serverless from "serverless";
 import findConfigPath from "serverless/lib/cli/resolve-configuration-path.js";
 
-export async function loadServerlessConfig(cwd = process.cwd(), debug) {
+export async function loadServerlessConfig(cwd = process.cwd()) {
   console.log("debug loadServerlessConfig", cwd);
   const stat = fs.statSync(cwd);
   if (!stat.isDirectory()) {

@@ -439,7 +439,9 @@ export class SNSServer {
     if (msg instanceof Object) {
       try {
         msg = JSON.stringify(msg);
-      } catch (ex) {}
+      } catch (ex) {
+        //
+      }
     }
     this.pluginDebug(msg, "server");
   }

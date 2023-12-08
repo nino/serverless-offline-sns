@@ -217,7 +217,7 @@ export class SNSAdapter {
 
     const subscribeRequest = new SubscribeCommand(params);
     await new Promise((res) => {
-      this.sns.send(subscribeRequest, (err, data) => {
+      this.sns.send(subscribeRequest, (err) => {
         if (err) {
           this.debug(err, err.stack);
         } else {
@@ -251,7 +251,7 @@ export class SNSAdapter {
 
     const subscribeRequest = new SubscribeCommand(params);
     await new Promise((res) => {
-      this.sns.send(subscribeRequest, (err, data) => {
+      this.sns.send(subscribeRequest, (err) => {
         if (err) {
           this.debug(err, err.stack);
         } else {

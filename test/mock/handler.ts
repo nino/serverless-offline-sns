@@ -24,7 +24,7 @@ export const pseudoHandler = (evt, ctx, cb) => {
   cb(null, "{}");
 };
 
-export const asyncHandler = async (evt, ctx) => {
+export const asyncHandler = async (evt) => {
   await new Promise((res) => setTimeout(res, 100));
   setResult(evt.Records[0].Sns.TopicArn);
   return "{}";
